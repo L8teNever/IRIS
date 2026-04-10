@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Timeline{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Timeline</h1>
+    <p class="page-subtitle">Dein Leben als chronologische Übersicht</p>
+  </div>
+  <a href="{{ url_for('create_ticket') }}" class="btn btn-filled">
+    <span class="material-symbols-outlined">add</span>Neues Ticket
+  </a>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar" style="margin-bottom:24px;">
+  <div class="field-group">
+    <label class="field-label" for="filter-category">Kategorie</label>
+    <select class="field-select" id="filter-category">
+      <option value="">Alle Kategorien</option>
+      {% for key, meta in categories.items() %}
+      <option value="{{ key }}" {% if args.get('category') == key %}selected{% endif %}>{{ meta.label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field-group">
+    <label class="field-label" for="date-from">Von</label>
+    <input class="field-input" id="date-from" value="{{ args.get('date_from', '') }}" style="min-width:130px;">
+  </div>
+  <div class="field-group">
+    <label class="field-label" for="date-to">Bis</label>
+    <input class="field-input" id="date-to" value="{{ args.get('date_to', '') }}" style="min-width:130px;">
+  </div>
+  <div style="display:flex;gap:8px;align-items:flex-end;">
+    <button type="button" class="btn btn-filled" onclick="applyTimelineFilters()">
+      <span class="material-symbols-outlined">filter_list</span>Filtern
+    </button>
+    <a href="{{ url_for('timeline') }}" class="btn btn-text">
+      <span class="material-symbols-outlined">clear</span>Reset
+    </a>
+  </div>
+</div>
+
+{% if grouped %}
+<div class="timeline-container">
+  <div class="timeline-line"></div>
+
+  {% for day, tickets in grouped.items() %}
+  <div class="timeline-day">
+    <div class="timeline-date-label">
+      {{ day.strftime('%A, %d. %B %Y') }}
+      <span class="text-muted">({{ tickets | length }})</span>
+    </div>
+
+    {% for ticket in tickets %}
+    <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="timeline-card" style="position:relative;">
+      <div class="timeline-dot" style="background:{{ ticket.priority_color }};"></div>
+      <div class="timeline-card-content">
+        <div class="timeline-title">{{ ticket.title }}</div>
+        <div class="timeline-meta">
+          <span class="cat-badge" style="background:var(--mdui-color-secondary-container);color:var(--mdui-color-on-secondary-container);padding:2px 8px;border-radius:12px;font-size:11px;">{{ ticket.category_label }}</span>
+          <span class="priority-badge priority-{{ ticket.priority }}" style="font-size:11px;">{{ ticket.priority_label }}</span>
+          {% if ticket.mood %}<span style="font-size:14px;">{{ ticket.mood_emoji }}</span>{% endif %}
+          <span>{{ ticket.event_date.strftime('%H:%M') }} Uhr</span>
+        </div>
+      </div>
+      <span class="status-badge status-{{ ticket.status }}" style="flex-shrink:0;">{{ ticket.status_label }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state">
+  <span class="material-symbols-outlined">timeline</span>
+  <p>Keine Ereignisse gefunden.</p>
+  <a href="{{ url_for('create_ticket') }}" class="btn btn-filled">
+    <span class="material-symbols-outlined">add</span>Erstes Ticket erstellen
+  </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block fab %}
+<div class="iris-fab">
+  <a href="{{ url_for('create_ticket') }}" title="Neues Ticket">
+    <span class="material-symbols-outlined">add</span>
+  </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function applyTimelineFilters() {
+  const params = new URLSearchParams();
+  const cat = document.getElementById('filter-category')?.value;
+  const df  = document.getElementById('date-from')?.value;
+  const dt  = document.getElementById('date-to')?.value;
+  if (cat) params.set('category', cat);
+  if (df)  params.set('date_from', df);
+  if (dt)  params.set('date_to', dt);
+  window.location.search = params.toString();
+}
+</script>
+{% endblock %}

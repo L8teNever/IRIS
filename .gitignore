@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+.venv/
+env/
+
+# Flask / App data
+iris.db
+instance/
+
+# Uploads (user files — not tracked in git)
+static/uploads/*
+!static/uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+# (Dockerfile and docker-compose.yml ARE tracked)
+
+# Secrets / env
+.env
+.env.local
+secrets.py
+
+# Claude Code local settings
+.claude/

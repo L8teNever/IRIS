@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="{{ app_theme }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}IRIS{% endblock %} — {{ app_name }}</title>
+
+  <!-- MDUI 2 — Material Design 3 -->
+  <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
+  <script src="https://unpkg.com/mdui@2/mdui.global.js"></script>
+
+  <!-- Material Symbols -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+
+  <!-- Inter font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+
+  <!-- Flatpickr -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head %}{% endblock %}
+  <script>
+    // Apply theme immediately to prevent flash
+    (function(){
+      var t = localStorage.getItem('iris-theme') || '{{ app_theme }}';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- Sidebar Navigation -->
+  <nav class="iris-sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="material-symbols-outlined sidebar-logo">remove_red_eye</span>
+      <span class="sidebar-title">{{ app_name }}</span>
+    </div>
+
+    <div class="sidebar-nav">
+      <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('ticket_list') }}" class="nav-item {% if request.endpoint in ('ticket_list', 'create_ticket', 'ticket_detail', 'ticket_edit') %}active{% endif %}">
+        <span class="material-symbols-outlined">confirmation_number</span>
+        <span>Tickets</span>
+      </a>
+      <a href="{{ url_for('timeline') }}" class="nav-item {% if request.endpoint == 'timeline' %}active{% endif %}">
+        <span class="material-symbols-outlined">timeline</span>
+        <span>Timeline</span>
+      </a>
+      <a href="{{ url_for('settings_view') }}" class="nav-item {% if request.endpoint == 'settings_view' %}active{% endif %}">
+        <span class="material-symbols-outlined">settings</span>
+        <span>Einstellungen</span>
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="nav-item theme-toggle" onclick="toggleTheme()" title="Theme wechseln">
+        <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+        <span>Theme</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile overlay -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- Mobile top bar -->
+  <header class="mobile-topbar">
+    <button class="icon-btn" onclick="openSidebar()">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <span class="mobile-title">{{ app_name }}</span>
+    <a href="{{ url_for('create_ticket') }}" class="icon-btn">
+      <span class="material-symbols-outlined">add</span>
+    </a>
+  </header>
+
+  <!-- Main content -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block fab %}{% endblock %}
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+
+  <script>updateThemeIcon();</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">{{ now.strftime('%A, %d. %B %Y') if now else '' }}</p>
+  </div>
+  <a href="{{ url_for('create_ticket') }}" class="btn btn-filled">
+    <span class="material-symbols-outlined">add</span>Neues Ticket
+  </a>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon">
+      <span class="material-symbols-outlined">confirmation_number</span>
+    </div>
+    <div>
+      <div class="stat-value">{{ total }}</div>
+      <div class="stat-label">Tickets gesamt</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#6750A422;">
+      <span class="material-symbols-outlined" style="color:#6750A4;">radio_button_unchecked</span>
+    </div>
+    <div>
+      <div class="stat-value">{{ open_count }}</div>
+      <div class="stat-label">Offen</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#2E7D3222;">
+      <span class="material-symbols-outlined" style="color:#2E7D32;">check_circle</span>
+    </div>
+    <div>
+      <div class="stat-value">{{ this_week }}</div>
+      <div class="stat-label">Diese Woche erledigt</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#1565C022;">
+      <span class="material-symbols-outlined" style="color:#1565C0; font-variation-settings:'FILL' 1;">
+        {{ categories[most_active_cat[0]]['icon'] if most_active_cat[0] else 'category' }}
+      </span>
+    </div>
+    <div>
+      <div class="stat-value" style="font-size:18px;">{{ most_active_cat[1]['label'] }}</div>
+      <div class="stat-label">Aktivste Kategorie ({{ most_active_cat[1]['count'] }})</div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="charts-grid">
+  <div class="chart-card">
+    <div class="chart-title">Tickets nach Kategorie</div>
+    <canvas id="category-chart" height="180"></canvas>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Tickets nach Status</div>
+    <canvas id="status-chart" height="180"></canvas>
+  </div>
+</div>
+
+<!-- Recent Tickets -->
+<div class="chart-card">
+  <div class="chart-title">Zuletzt erstellt</div>
+  {% if recent %}
+  <div class="recent-list">
+    {% for ticket in recent %}
+    <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="recent-item">
+      <span class="priority-badge priority-{{ ticket.priority }}" style="min-width:70px;justify-content:center;">{{ ticket.priority_label }}</span>
+      <span class="recent-title">{{ ticket.title }}</span>
+      <span class="status-badge status-{{ ticket.status }}">{{ ticket.status_label }}</span>
+      <span class="recent-time">{{ ticket.created_at.strftime('%d.%m.%y') }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <span class="material-symbols-outlined">inbox</span>
+    <p>Noch keine Tickets. <a href="{{ url_for('create_ticket') }}">Jetzt erstellen →</a></p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block fab %}
+<div class="iris-fab">
+  <a href="{{ url_for('create_ticket') }}" title="Neues Ticket">
+    <span class="material-symbols-outlined">add</span>
+  </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CAT_LABELS  = {{ category_data.values() | map(attribute='label') | list | tojson }};
+const CAT_DATA    = {{ category_data.values() | map(attribute='count') | list | tojson }};
+const STAT_LABELS = {{ status_data.values() | map(attribute='label') | list | tojson }};
+const STAT_DATA   = {{ status_data.values() | map(attribute='count') | list | tojson }};
+const STAT_COLORS = {{ status_data.values() | map(attribute='color') | list | tojson }};
+
+const isDark    = document.documentElement.getAttribute('data-theme') === 'dark';
+const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+const textColor = isDark ? '#cac4d0' : '#49454f';
+Chart.defaults.color = textColor;
+
+new Chart(document.getElementById('category-chart'), {
+  type: 'bar',
+  data: { labels: CAT_LABELS, datasets: [{ data: CAT_DATA, backgroundColor: '#6750A4cc', borderRadius: 6, borderSkipped: false }] },
+  options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { grid: { color: gridColor }, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } }
+});
+new Chart(document.getElementById('status-chart'), {
+  type: 'doughnut',
+  data: { labels: STAT_LABELS, datasets: [{ data: STAT_DATA, backgroundColor: STAT_COLORS.map(c => c+'cc'), borderWidth: 2, borderColor: isDark ? '#1c1b1f' : '#fff' }] },
+  options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { padding: 12, boxWidth: 12 } } }, cutout: '60%' }
+});
+</script>
+{% endblock %}

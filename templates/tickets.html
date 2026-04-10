@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Tickets{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Tickets</h1>
+    <p class="page-subtitle">{{ pagination.total }} Ticket{% if pagination.total != 1 %}s{% endif %} gefunden</p>
+  </div>
+  <a href="{{ url_for('create_ticket') }}" class="btn btn-filled">
+    <span class="material-symbols-outlined">add</span>Neues Ticket
+  </a>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <div class="field-group wide">
+    <label class="field-label" for="search-input">Suche</label>
+    <input class="field-input" id="search-input" value="{{ args.get('q', '') }}" placeholder="Titel, Beschreibung, Tags..." onkeydown="if(event.key==='Enter') applyFilters()">
+  </div>
+
+  <div class="field-group">
+    <label class="field-label" for="filter-category">Kategorie</label>
+    <select class="field-select" id="filter-category">
+      <option value="">Alle</option>
+      {% for key, meta in categories.items() %}
+      <option value="{{ key }}" {% if args.get('category') == key %}selected{% endif %}>{{ meta.label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label" for="filter-status">Status</label>
+    <select class="field-select" id="filter-status">
+      <option value="">Alle</option>
+      {% for s in statuses %}
+      <option value="{{ s.value }}" {% if args.get('status') == s.value %}selected{% endif %}>{{ s.label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label" for="filter-priority">Priorität</label>
+    <select class="field-select" id="filter-priority">
+      <option value="">Alle</option>
+      {% for p in priorities %}
+      <option value="{{ p.value }}" {% if args.get('priority') == p.value %}selected{% endif %}>{{ p.label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label" for="filter-mood">Stimmung</label>
+    <select class="field-select" id="filter-mood">
+      <option value="">Alle</option>
+      {% for m in moods %}
+      <option value="{{ m.value }}" {% if args.get('mood') == m.value %}selected{% endif %}>{{ m.label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label" for="date-from">Von</label>
+    <input class="field-input" id="date-from" value="{{ args.get('date_from', '') }}" style="min-width:120px;">
+  </div>
+
+  <div class="field-group">
+    <label class="field-label" for="date-to">Bis</label>
+    <input class="field-input" id="date-to" value="{{ args.get('date_to', '') }}" style="min-width:120px;">
+  </div>
+
+  <div style="display:flex;gap:8px;align-items:flex-end;padding-bottom:0;">
+    <button type="button" class="btn btn-filled" onclick="applyFilters()">
+      <span class="material-symbols-outlined">search</span>Filtern
+    </button>
+    {% if active_filters %}
+    <button type="button" class="btn btn-text" onclick="clearFilters()">
+      <span class="material-symbols-outlined">clear</span>Reset
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Active Filters -->
+{% if active_filters %}
+<div class="active-filters">
+  {% for key, val in active_filters.items() %}
+  <button type="button" class="filter-chip" onclick="removeFilter('{{ key }}')">
+    {{ val }}<span class="material-symbols-outlined">close</span>
+  </button>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Ticket Table -->
+<div class="tickets-card">
+  {% if tickets %}
+  <table class="tickets-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th><a href="?{{ args | replace_sort('priority', sort, order) }}">Priorität {% if sort=='priority' %}<span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;">{{ 'arrow_upward' if order=='asc' else 'arrow_downward' }}</span>{% endif %}</a></th>
+        <th><a href="?{{ args | replace_sort('title', sort, order) }}">Titel</a></th>
+        <th>Kategorie</th>
+        <th><a href="?{{ args | replace_sort('status', sort, order) }}">Status {% if sort=='status' %}<span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;">{{ 'arrow_upward' if order=='asc' else 'arrow_downward' }}</span>{% endif %}</a></th>
+        <th>Mood</th>
+        <th><a href="?{{ args | replace_sort('event_date', sort, order) }}">Datum {% if sort=='event_date' %}<span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;">{{ 'arrow_upward' if order=='asc' else 'arrow_downward' }}</span>{% endif %}</a></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ticket in tickets %}
+      <tr>
+        <td><span class="ticket-id">#{{ ticket.id }}</span></td>
+        <td><span class="priority-badge priority-{{ ticket.priority }}">{{ ticket.priority_label }}</span></td>
+        <td>
+          <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="ticket-title-link">{{ ticket.title }}</a>
+          {% if ticket.tags_list %}
+          <div class="mt-4">
+            {% for tag in ticket.tags_list[:3] %}
+            <span class="priority-badge" style="background:#6750A411;color:var(--mdui-color-on-surface-variant);font-size:11px;padding:2px 7px;">{{ tag }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </td>
+        <td>
+          <span class="cat-badge" style="background:var(--mdui-color-secondary-container);color:var(--mdui-color-on-secondary-container);">
+            <span class="material-symbols-outlined" style="font-size:13px;font-variation-settings:'FILL' 1;">{{ categories[ticket.category]['icon'] if ticket.category in categories else 'label' }}</span>
+            {{ ticket.category_label }}
+          </span>
+        </td>
+        <td><span class="status-badge status-{{ ticket.status }}">{{ ticket.status_label }}</span></td>
+        <td><span class="mood-emoji" title="{{ ticket.mood or '' }}">{{ ticket.mood_emoji }}</span></td>
+        <td><span class="text-muted">{{ ticket.event_date.strftime('%d.%m.%y') }}</span></td>
+        <td>
+          <div style="display:flex;gap:2px;">
+            <a href="{{ url_for('ticket_edit', ticket_id=ticket.id) }}" class="btn-icon" title="Bearbeiten">
+              <span class="material-symbols-outlined">edit</span>
+            </a>
+            <button type="button" class="btn-icon danger" title="Löschen"
+              onclick="confirmDelete({{ ticket.id }}, '{{ ticket.title | replace("'", "\\'") }}')">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+            <form id="delete-form-{{ ticket.id }}" method="POST" action="{{ url_for('ticket_delete', ticket_id=ticket.id) }}" style="display:none"></form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if pagination.pages > 1 %}
+  <div class="pagination">
+    {% if pagination.has_prev %}<a class="page-btn" href="?{{ args | replace_page(pagination.prev_num) }}">‹</a>{% endif %}
+    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if p %}<a class="page-btn {{ 'active' if p == pagination.page }}" href="?{{ args | replace_page(p) }}">{{ p }}</a>
+      {% else %}<span style="color:var(--mdui-color-on-surface-variant);padding:6px 4px;">…</span>{% endif %}
+    {% endfor %}
+    {% if pagination.has_next %}<a class="page-btn" href="?{{ args | replace_page(pagination.next_num) }}">›</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <span class="material-symbols-outlined">inbox</span>
+    <p>Keine Tickets gefunden.</p>
+    {% if active_filters %}
+    <button type="button" class="btn btn-tonal" onclick="clearFilters()">Filter zurücksetzen</button>
+    {% else %}
+    <a href="{{ url_for('create_ticket') }}" class="btn btn-filled"><span class="material-symbols-outlined">add</span>Erstes Ticket erstellen</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block fab %}
+<div class="iris-fab">
+  <a href="{{ url_for('create_ticket') }}" title="Neues Ticket">
+    <span class="material-symbols-outlined">add</span>
+  </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function removeFilter(key) {
+  const params = new URLSearchParams(window.location.search);
+  params.delete(key);
+  window.location.search = params.toString();
+}
+</script>
+{% endblock %}

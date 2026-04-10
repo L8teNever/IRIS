@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}#{{ ticket.id }} {{ ticket.title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="text-muted">
+      <a href="{{ url_for('ticket_list') }}" style="color:inherit;text-decoration:none;">Tickets</a> › #{{ ticket.id }}
+    </p>
+    <h1 class="page-title">{{ ticket.title }}</h1>
+  </div>
+  <div class="flex-gap">
+    <a href="{{ url_for('ticket_edit', ticket_id=ticket.id) }}" class="btn btn-tonal">
+      <span class="material-symbols-outlined">edit</span>Bearbeiten
+    </a>
+    <button type="button" class="btn btn-danger"
+      onclick="confirmDelete({{ ticket.id }}, '{{ ticket.title | replace("'", "\\'") }}')">
+      <span class="material-symbols-outlined">delete</span>Löschen
+    </button>
+    <form id="delete-form-{{ ticket.id }}" method="POST" action="{{ url_for('ticket_delete', ticket_id=ticket.id) }}" style="display:none"></form>
+  </div>
+</div>
+
+<div class="detail-layout">
+
+  <!-- Main Content -->
+  <div class="detail-main">
+    {% if ticket.description %}
+    <div class="section-title">Beschreibung</div>
+    <div class="description-content">{{ ticket.description }}</div>
+    {% else %}
+    <p class="text-muted" style="font-style:italic;">Keine Beschreibung angegeben.</p>
+    {% endif %}
+
+    {% if ticket.tags_list %}
+    <div class="section-title mt-24">Tags</div>
+    <div class="flex-gap">
+      {% for tag in ticket.tags_list %}
+      <a href="{{ url_for('ticket_list', tag=tag) }}" style="text-decoration:none;">
+        <span class="priority-badge" style="background:var(--mdui-color-secondary-container);color:var(--mdui-color-on-secondary-container);">{{ tag }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if linked %}
+    <div class="section-title mt-24">Verknüpfte Tickets</div>
+    <div class="flex-gap">
+      {% for item in linked %}
+      <a href="{{ url_for('ticket_detail', ticket_id=item.ticket.id) }}" style="text-decoration:none;">
+        <span class="linked-chip">#{{ item.ticket.id }} — {{ item.ticket.title }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if ticket.attachments %}
+    <div class="section-title mt-24">Anhänge</div>
+    <div class="attachment-list">
+      {% for att in ticket.attachments %}
+      <a href="{{ url_for('serve_upload', filename=att.stored_filename) }}" target="_blank" class="attachment-item" download="{{ att.filename }}">
+        <span class="material-symbols-outlined" style="font-size:16px;">attach_file</span>
+        {{ att.filename }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Sidebar -->
+  <div class="detail-sidebar">
+    <!-- Status quick-change -->
+    <div class="detail-meta-card">
+      <div class="settings-title">Status ändern</div>
+      <div class="field-group">
+        <select class="field-select" id="status-select">
+          {% for s in statuses %}
+          <option value="{{ s.value }}" {% if s.value == ticket.status %}selected{% endif %}>{{ s.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Metadata -->
+    <div class="detail-meta-card">
+      <div class="meta-row">
+        <span class="meta-label">Status</span>
+        <span id="status-badge" class="status-badge status-{{ ticket.status }} meta-value">{{ ticket.status_label }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Priorität</span>
+        <span class="priority-badge priority-{{ ticket.priority }} meta-value">{{ ticket.priority_label }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Kategorie</span>
+        <span class="meta-value">
+          <span class="material-symbols-outlined" style="font-size:14px;font-variation-settings:'FILL' 1;vertical-align:middle;">{{ categories[ticket.category]['icon'] if ticket.category in categories else 'label' }}</span>
+          {{ ticket.category_label }}
+        </span>
+      </div>
+      {% if ticket.subcategory %}
+      <div class="meta-row">
+        <span class="meta-label">Unterkategorie</span>
+        <span class="meta-value">{{ ticket.subcategory }}</span>
+      </div>
+      {% endif %}
+      {% if ticket.mood %}
+      <div class="meta-row">
+        <span class="meta-label">Stimmung</span>
+        <span class="meta-value">{{ ticket.mood_emoji }} {{ ticket.mood | capitalize }}</span>
+      </div>
+      {% endif %}
+      <div class="meta-row">
+        <span class="meta-label">Ereignis</span>
+        <span class="meta-value">{{ ticket.event_date.strftime('%d.%m.%Y %H:%M') }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Erstellt</span>
+        <span class="meta-value">{{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Geändert</span>
+        <span class="meta-value">{{ ticket.updated_at.strftime('%d.%m.%Y %H:%M') }}</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>initStatusUpdate({{ ticket.id }});</script>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Einstellungen{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Einstellungen</h1>
+</div>
+
+<div class="settings-grid">
+
+  <!-- App Settings -->
+  <div class="settings-card">
+    <div class="settings-title">
+      <span class="material-symbols-outlined">tune</span>App-Einstellungen
+    </div>
+    <form method="POST">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="field-group">
+          <label class="field-label" for="f-theme">Theme</label>
+          <select class="field-select" id="f-theme" name="theme">
+            <option value="dark" {% if theme == 'dark' %}selected{% endif %}>🌙 Dunkel</option>
+            <option value="light" {% if theme == 'light' %}selected{% endif %}>☀️ Hell</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="f-defcat">Standard-Kategorie für neue Tickets</label>
+          <select class="field-select" id="f-defcat" name="default_category">
+            {% for key, meta in categories.items() %}
+            <option value="{{ key }}" {% if default_cat == key %}selected{% endif %}>{{ meta.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <button type="submit" class="btn btn-filled">
+            <span class="material-symbols-outlined">save</span>Speichern
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tag Management -->
+  <div class="settings-card">
+    <div class="settings-title">
+      <span class="material-symbols-outlined">label</span>Tag-Verwaltung
+    </div>
+
+    {% if tags %}
+    <div id="tag-list">
+      {% for tag in tags %}
+      <div class="tag-row" id="tag-row-{{ tag.id }}">
+        <span class="tag-swatch" style="background:{{ tag.color }};"></span>
+        <span class="tag-name">{{ tag.name }}</span>
+        <button type="button" class="btn-icon danger" onclick="deleteTag({{ tag.id }})" title="Löschen">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted" style="margin-bottom:16px;">Noch keine Tags vorhanden.</p>
+    {% endif %}
+
+    <div class="section-title mt-16">Neuen Tag hinzufügen</div>
+    <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="field-group" style="flex:1;min-width:140px;">
+        <label class="field-label" for="new-tag-name">Tag-Name</label>
+        <input class="field-input" id="new-tag-name" placeholder="z.B. Urlaub">
+      </div>
+      <div class="field-group" style="min-width:80px;">
+        <label class="field-label" for="new-tag-color">Farbe</label>
+        <input type="color" id="new-tag-color" value="#6750A4"
+               style="width:48px;height:38px;border:1px solid var(--mdui-color-outline-variant);border-radius:8px;cursor:pointer;padding:2px;background:transparent;">
+      </div>
+      <button type="button" class="btn btn-tonal" onclick="addTag()" style="margin-bottom:0;">
+        <span class="material-symbols-outlined">add</span>Hinzufügen
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:32px;text-align:center;" class="text-muted">
+  <p>IRIS — Integrated Recording &amp; Information System</p>
+</div>
+{% endblock %}

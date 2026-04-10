@@ -1,0 +1,14 @@
+services:
+  iris:
+    build: .
+    container_name: iris
+    ports:
+      - "5000:5000"
+    volumes:
+      - iris_db:/app/iris.db
+      - iris_uploads:/app/static/uploads
+    restart: unless-stopped
+
+volumes:
+  iris_db:
+  iris_uploads:

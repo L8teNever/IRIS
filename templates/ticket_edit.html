@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Ticket #{{ ticket.id }} bearbeiten{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="text-muted">
+      <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" style="color:inherit;text-decoration:none;">#{{ ticket.id }}</a> › Bearbeiten
+    </p>
+    <h1 class="page-title">Ticket bearbeiten</h1>
+  </div>
+  <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-text">
+    <span class="material-symbols-outlined">arrow_back</span>Abbrechen
+  </a>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+  <div class="form-card">
+
+    <div class="form-full mb-16">
+      <div class="field-group">
+        <label class="field-label" for="f-title">Titel *</label>
+        <input class="field-input" id="f-title" name="title" required value="{{ ticket.title }}">
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="field-group">
+        <label class="field-label" for="category-select">Kategorie</label>
+        <select class="field-select" id="category-select" name="category">
+          {% for key, meta in categories.items() %}
+          <option value="{{ key }}" {% if ticket.category == key %}selected{% endif %}>{{ meta.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="subcategory-select">Unterkategorie</label>
+        <select class="field-select" id="subcategory-select" name="subcategory" {% if ticket.category != 'schule' %}disabled{% endif %}>
+          <option value="">— Keine —</option>
+          {% if ticket.category == 'schule' %}
+            {% for sub in categories['schule']['subs'] %}
+            <option value="{{ sub.value }}" {% if ticket.subcategory == sub.value %}selected{% endif %}>{{ sub.label }}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="f-priority">Priorität</label>
+        <select class="field-select" id="f-priority" name="priority">
+          {% for p in priorities %}
+          <option value="{{ p.value }}" {% if ticket.priority == p.value %}selected{% endif %}>{{ p.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="f-status">Status</label>
+        <select class="field-select" id="f-status" name="status">
+          {% for s in statuses %}
+          <option value="{{ s.value }}" {% if ticket.status == s.value %}selected{% endif %}>{{ s.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="f-mood">Stimmung</label>
+        <select class="field-select" id="f-mood" name="mood">
+          <option value="">— Keine Angabe —</option>
+          {% for m in moods %}
+          <option value="{{ m.value }}" {% if ticket.mood == m.value %}selected{% endif %}>{{ m.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="event-date-input">Datum &amp; Uhrzeit</label>
+        <input class="field-input" id="event-date-input" name="event_date" value="{{ ticket.event_date.strftime('%Y-%m-%d %H:%M') }}">
+      </div>
+    </div>
+
+    <div class="form-full mt-8">
+      <div class="field-group">
+        <label class="field-label" for="tags-input">Tags (kommagetrennt)</label>
+        <input class="field-input" id="tags-input" name="tags" value="{{ ticket.tags or '' }}">
+      </div>
+      <div class="preset-tags-row" id="preset-tags"></div>
+    </div>
+
+    <div class="form-full mt-16">
+      <div class="field-group">
+        <label class="field-label" for="f-desc">Beschreibung</label>
+        <textarea class="field-textarea" id="f-desc" name="description" rows="5">{{ ticket.description or '' }}</textarea>
+      </div>
+    </div>
+
+    <div class="form-full mt-16">
+      <div class="section-title">Verknüpfte Tickets</div>
+      <input type="hidden" name="linked_tickets" id="linked-tickets-value">
+      <div class="autocomplete-wrapper">
+        <div class="field-group">
+          <label class="field-label" for="linked-search-input">Ticket suchen</label>
+          <input class="field-input" id="linked-search-input" placeholder="ID oder Titel eingeben">
+        </div>
+        <div class="autocomplete-dropdown" id="linked-dropdown"></div>
+      </div>
+      <div class="linked-chips mt-8" id="linked-chips"></div>
+    </div>
+
+    {% if ticket.attachments %}
+    <div class="form-full mt-16">
+      <div class="section-title">Vorhandene Anhänge</div>
+      <div class="attachment-list">
+        {% for att in ticket.attachments %}
+        <a href="{{ url_for('serve_upload', filename=att.stored_filename) }}" target="_blank" class="attachment-item" download="{{ att.filename }}">
+          <span class="material-symbols-outlined" style="font-size:16px;">attach_file</span>{{ att.filename }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="form-full mt-16">
+      <div class="section-title">Neue Anhänge hinzufügen</div>
+      <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+        <button type="button" class="btn btn-tonal" onclick="document.getElementById('file-input').click()">
+          <span class="material-symbols-outlined">attach_file</span>Dateien auswählen
+        </button>
+        <span class="text-muted" id="file-label">Keine Datei ausgewählt</span>
+      </label>
+      <input type="file" id="file-input" name="attachments" multiple style="display:none" onchange="updateFileLabel(this)">
+    </div>
+
+    <div class="flex-gap mt-24">
+      <button type="submit" class="btn btn-filled">
+        <span class="material-symbols-outlined">save</span>Änderungen speichern
+      </button>
+      <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-text">Abbrechen</a>
+    </div>
+
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>initTicketForm({{ linked_ids | tojson }});</script>
+{% endblock %}
