@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p static/uploads
+RUN mkdir -p static/uploads instance && chmod 777 static/uploads instance
 
 EXPOSE 5000
 

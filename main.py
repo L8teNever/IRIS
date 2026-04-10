@@ -9,7 +9,18 @@ UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'iris-private-secret-2024'
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_DIR, "iris.db")}'
+    # Create instance folder and ensure it's writable
+    instance_path = os.path.join(BASE_DIR, 'instance')
+    os.makedirs(instance_path, exist_ok=True)
+    
+    db_path = os.path.join(instance_path, 'iris.db')
+    
+    # SELF-HEALING: If Docker created a directory named 'iris.db', delete it
+    if os.path.exists(db_path) and os.path.isdir(db_path):
+        import shutil
+        shutil.rmtree(db_path)
+        
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.abspath(db_path)}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB

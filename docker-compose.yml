@@ -1,11 +1,12 @@
 services:
   iris:
-    image: ghcr.io/l8tenever/iris:latest
+    build: .
+    image: iris:latest
     container_name: iris
     ports:
       - "5000:5000"
     volumes:
-      - iris_db:/app/iris.db
+      - iris_db:/app/instance
       - iris_uploads:/app/static/uploads
     restart: unless-stopped
 
