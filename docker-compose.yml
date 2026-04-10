@@ -1,6 +1,6 @@
 services:
   iris:
-    build: .
+    image: ghcr.io/l8tenever/iris:latest
     container_name: iris
     ports:
       - "5000:5000"
