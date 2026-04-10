@@ -8,7 +8,16 @@ services:
       - iris_db:/app/iris.db
       - iris_uploads:/app/static/uploads
     restart: unless-stopped
+    networks:
+      - iris_net
 
 volumes:
   iris_db:
   iris_uploads:
+
+networks:
+  iris_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
