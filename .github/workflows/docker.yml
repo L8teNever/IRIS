@@ -29,5 +29,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/iris:latest
-            ghcr.io/${{ github.repository_owner }}/iris:${{ github.sha }}
+            ghcr.io/l8tenever/iris:latest
+            ghcr.io/l8tenever/iris:${{ github.sha }}
